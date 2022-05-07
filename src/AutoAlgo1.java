@@ -120,17 +120,6 @@ public class AutoAlgo1 {
 
 	}
 
-	public void direction_home(){
-		Pair<Point, Double> curr_node = stackWay.pop();
-		Point p = curr_node.getFirst();
-		double degrees = curr_node.getSecond();
-
-
-
-	}
-
-
-
 	public void setPixel(double x, double y,PixelState state) {
 		int xi = (int)x;
 		int yi = (int)y;
@@ -345,6 +334,7 @@ public class AutoAlgo1 {
 		} else {
 			if(!try_to_escape) {
 				try_to_escape = true;
+
 				Lidar lidar_down = drone.lidars.get(1);
 				double lidar_down_dist = lidar_down.current_distance;
 
@@ -353,39 +343,62 @@ public class AutoAlgo1 {
 
 				Lidar lidar_front = drone.lidars.get(0);
 				double lidar_front_dist = lidar_front.current_distance;
-				
-				int spin_by = max_angle_risky;
+
+				int spin_by = 0;
+				System.out.println("___________");
+				System.out.println(lidar_up_dist);
+				System.out.println(lidar_front_dist);
+				System.out.println(lidar_down_dist);
 
 
-
-				///////////////
-				if(a > 270 && b > 270) {
-					is_lidars_max = true;
-					Point l1 = Tools.getPointByDistance(dronePoint, lidar1.degrees + drone.getGyroRotation(), lidar1.current_distance);
-					Point l2 = Tools.getPointByDistance(dronePoint, lidar2.degrees + drone.getGyroRotation(), lidar2.current_distance);
-					Point last_point = getAvgLastPoint();
-					double dis_to_lidar1 = Tools.getDistanceBetweenPoints(last_point,l1);
-					double dis_to_lidar2 = Tools.getDistanceBetweenPoints(last_point,l2);
-
-					if( Tools.getDistanceBetweenPoints(getLastPoint(), dronePoint) >=  max_distance_between_points) {
-						points.add(dronePoint);
-						mGraph.addVertex(dronePoint);
-					}
+				System.out.println("___________");
 
 
-					spin_by = 90;
+//				if(lidar_front_dist < 5){
+//					if(lidar_front_dist < 2) {
+//						spin_by = 90;
+//					}
+////					else{
+////						spin_by =25 ;
+////					}
+////
+//				}
+//				 if(lidar_up_dist < 4){
+//					spin_by = 10;
+//				}if(lidar_down_dist < 4){
+//					spin_by = -10;
+//				}
 
-					if(dis_to_lidar1 < dis_to_lidar2) {
 
-						spin_by *= (-1 );
-					}
-				} else {
-
-
-					if(a < b ) {
-						spin_by *= (-1 );
-					}
-				}
+//
+//				///////////////
+//				if(a > 270 && b > 270) {
+//					is_lidars_max = true;
+//					Point l1 = Tools.getPointByDistance(dronePoint, lidar1.degrees + drone.getGyroRotation(), lidar1.current_distance);
+//					Point l2 = Tools.getPointByDistance(dronePoint, lidar2.degrees + drone.getGyroRotation(), lidar2.current_distance);
+//					Point last_point = getAvgLastPoint();
+//					double dis_to_lidar1 = Tools.getDistanceBetweenPoints(last_point,l1);
+//					double dis_to_lidar2 = Tools.getDistanceBetweenPoints(last_point,l2);
+//
+//					if( Tools.getDistanceBetweenPoints(getLastPoint(), dronePoint) >=  max_distance_between_points) {
+//						points.add(dronePoint);
+//						mGraph.addVertex(dronePoint);
+//					}
+//
+//
+//					spin_by = 90;
+//
+//					if(dis_to_lidar1 < dis_to_lidar2) {
+//
+//						spin_by *= (-1 );
+//					}
+//				} else {
+//
+//
+//					if(a < b ) {
+//						spin_by *= (-1 );
+//					}
+//				}
 				System.out.println(spin_by);
 				spinBy(spin_by,true,new Func() {
 					@Override
@@ -400,15 +413,14 @@ public class AutoAlgo1 {
 		//}
 	}
 
-	
 	int counter = 0;
-	
+
 	public void doLeftRight() {
 		if(is_finish) {
 			leftOrRight *= -1;
 			counter++;
 			is_finish = false;
-			
+
 			spinBy(max_rotation_to_direction*leftOrRight,false,new Func() {
 				@Override
 				public void method() {
@@ -417,15 +429,15 @@ public class AutoAlgo1 {
 			});
 		}
 	}
-	
-	
+
+
 	double lastGyroRotation = 0;
 	public void updateRotating(int deltaTime) {
 
 		if(degrees_left.size() == 0) {
 			return;
 		}
-		
+
 		double degrees_left_to_rotate = degrees_left.get(0);
 		boolean isLeft = true;
 		if(degrees_left_to_rotate > 0) {
@@ -434,9 +446,9 @@ public class AutoAlgo1 {
 
 		double curr =  drone.getGyroRotation();
 		double just_rotated = 0;
-		
+
 		if(isLeft) {
-			
+
 			just_rotated = curr - lastGyroRotation;
 			if(just_rotated > 0) {
 				just_rotated = -(360 - just_rotated);
@@ -447,35 +459,35 @@ public class AutoAlgo1 {
 				just_rotated = 360 + just_rotated;
 			}
 		}
-		
-	
-		 
+
+
+
 		lastGyroRotation = curr;
 		degrees_left_to_rotate-=just_rotated;
 		degrees_left.remove(0);
 		degrees_left.add(0,degrees_left_to_rotate);
-		
+
 		if((isLeft && degrees_left_to_rotate >= 0) || (!isLeft && degrees_left_to_rotate <= 0)) {
 			degrees_left.remove(0);
-			
+
 			Func func = degrees_left_func.get(0);
 			if(func != null) {
 				func.method();
 			}
 			degrees_left_func.remove(0);
-			
-			
+
+
 			if(degrees_left.size() == 0) {
 				isRotating = 0;
 			}
-			return; 
+			return;
 		}
-		
+
 		int direction = (int)(degrees_left_to_rotate / Math.abs(degrees_left_to_rotate));
 		drone.rotateLeft(deltaTime * direction);
-		
+
 	}
-	
+
 	public void spinBy(double degrees,boolean isFirst,Func func) {
 		lastGyroRotation = drone.getGyroRotation();
 		if(isFirst) {
@@ -487,33 +499,33 @@ public class AutoAlgo1 {
 			degrees_left.add(degrees);
 			degrees_left_func.add(func);
 		}
-		
+
 		isRotating =1;
 	}
-	
+
 	public void spinBy(double degrees,boolean isFirst) {
 		lastGyroRotation = drone.getGyroRotation();
 		if(isFirst) {
 			degrees_left.add(0,degrees);
 			degrees_left_func.add(0,null);
-		
-			
+
+
 		} else {
 			degrees_left.add(degrees);
 			degrees_left_func.add(null);
 		}
-		
+
 		isRotating =1;
 	}
-	
+
 	public void spinBy(double degrees) {
 		lastGyroRotation = drone.getGyroRotation();
-		
+
 		degrees_left.add(degrees);
 		degrees_left_func.add(null);
 		isRotating = 1;
 	}
-	
+
 	public Point getLastPoint() {
 		if(points.size() == 0) {
 			return init_point;
@@ -521,25 +533,25 @@ public class AutoAlgo1 {
 
 		return points.get(points.size()-1);
 	}
-	
+
 	public Point removeLastPoint() {
 		if(points.isEmpty()) {
 			return init_point;
 		}
-		
+
 		return points.remove(points.size()-1);
 	}
-	
-	
+
+
 	public Point getAvgLastPoint() {
 		if(points.size() < 2) {
 			return init_point;
 		}
-		
+
 		Point p1 = points.get(points.size()-1);
 		Point p2 = points.get(points.size()-2);
 		return new Point((p1.x + p2.x) /2, (p1.y + p2.y) /2);
 	}
-	
+
 
 }
